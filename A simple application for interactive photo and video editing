@@ -1,0 +1,169 @@
+import cv2
+import numpy as np
+import sys
+
+
+print("A simple application for editing interactive photos and videos")
+input_edit = input("Do you want to edit an image? or a video? (image/video): ").lower()
+
+#question_for_image 
+if input_edit == "image":
+    input_photo = input("Enter your image name: ").lower()
+    format_photo = input("Enter your image format \n(png, jpg, jpeg): ").lower()
+
+    if format_photo not in ["png", "jpg", "jpeg"]:
+        print("Error: Invalid image format. Please use only png, jpg, jpeg.")
+        sys.exit()
+
+    # read_the_image
+    image = cv2.imread(f'images/{input_photo}.{format_photo}')
+
+    if image is None:
+        print("Error: Could not load the image. Please check the image name and path.")
+        sys.exit()
+
+    # widths and heights
+    width = int(input("Enter the width of the image: "))
+    height = int(input("Enter the height of the image: "))
+    new_image = cv2.resize(image, (width, height))
+
+    # pixels and dimensions
+    pixel = new_image.size
+    dimensions = new_image.shape
+    print(f"Number of pixels: {pixel}")
+    print(f"Dimensions of the image: {dimensions}")
+
+    # Print rectangle
+    print_rectangle = input("Do you want to draw a rectangle? Yes or No: ").lower()
+
+    if print_rectangle == "yes":
+        Horizontal_axis1 = int(input("Enter the horizontal axis of the first point: "))
+        Vertical_axis1 = int(input("Enter the vertical axis of the first point: "))
+        Horizontal_axis2 = int(input("Enter the horizontal axis of the second point: "))
+        vertical_axis2 = int(input("Enter the vertical axis of the second point: "))
+        Line_thickness = int(input("Enter the thickness of the line: "))
+        
+        color_input = input("Enter the color of the rectangle (red, green, blue): ").lower()
+        
+        if color_input == "red":
+            rectangle_color = (0, 0, 255)
+        elif color_input == "green":
+            rectangle_color = (0, 255, 0)
+        elif color_input == "blue":
+            rectangle_color = (255, 0, 0)
+        else:
+            print("Unknown color, defaulting to white.")
+            rectangle_color = (255, 255, 255)
+            
+        cv2.rectangle(new_image, (Horizontal_axis1, Vertical_axis1), (Horizontal_axis2, vertical_axis2), rectangle_color, Line_thickness)
+
+    # change_color
+    change_color = input("Do you want to change the colors? Yes or No: ").lower()
+    if change_color == "yes":
+        old_color_name = input("Enter the color you want to replace (red, green, blue): ").lower()
+        new_color_name = input("Enter the color you want to change to (red, green, blue): ").lower()
+        colors_bgr = {
+            "red": [0, 0, 255],
+            "green": [0, 255, 0],
+            "blue": [255, 0, 0]
+        }
+        if old_color_name not in colors_bgr or new_color_name not in colors_bgr:
+            print("Unknown color. Please use only red, green, or blue.")
+        else:
+            old_color = np.array(colors_bgr[old_color_name])
+            new_color = np.array(colors_bgr[new_color_name])
+            mask = np.all(new_image == old_color, axis=-1)
+            new_image[mask] = new_color
+            print(f"The color {old_color_name} has been changed to {new_color_name}")
+    else:
+        print("No color change applied.")
+        
+    # Shows image and waits for a key press to close
+    cv2.imshow("My Image", new_image) 
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+
+#_______________________________________________________________________________________________________
+#question_for_video
+if input_edit == "video":
+    input_video = input("Enter your video name: ").lower()
+    format_video = input("Enter your video format \n(mp4, avi, mov): ").lower()
+
+    if format_video not in ["mp4", "avi", "mov"]:
+        print("Error: Invalid video format. Please use only mp4, avi, mov.")
+        sys.exit()
+
+    # read_the_video
+    video = cv2.VideoCapture(f'videos/{input_video}.{format_video}')
+    
+    # Correct way to check if video loaded
+    if not video.isOpened():
+        print("Error: Could not load the video. Please check the video name and path.")
+        sys.exit()
+        
+    # widths and heights
+    width_video = int(input("Enter the width of the video: "))
+    height_video = int(input("Enter the height of the video: "))
+    
+    # print_rectangle
+    print_rectangle_video = input("Do you want to draw a rectangle on the video? Yes or No: ").lower()     
+    if print_rectangle_video == "yes":
+        Horizontal_axis1_video = int(input("Enter the horizontal axis of the first point: "))
+        Vertical_axis1_video = int(input("Enter the vertical axis of the first point: "))
+        Horizontal_axis2_video = int(input("Enter the horizontal axis of the second point: "))
+        vertical_axis2_video = int(input("Enter the vertical axis of the second point: "))
+        Line_thickness_video = int(input("Enter the thickness of the line: "))
+        
+        color_input_video = input("Enter the color of the rectangle (red, green, blue): ").lower()
+        if color_input_video == "red":
+            rect_color_vid = (0, 0, 255)
+        elif color_input_video == "green":
+            rect_color_vid = (0, 255, 0)
+        elif color_input_video == "blue":
+            rect_color_vid = (255, 0, 0)
+        else:
+            rect_color_vid = (255, 255, 255)
+    else:
+        print("No rectangle will be drawn on the video.")
+
+    # Dynamically_to avoid storage problems
+    if format_video == "mp4":
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    elif format_video == "avi":
+        fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    else:
+         fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+
+    output_video = cv2.VideoWriter(f'videos/output_{input_video}.{format_video}', fourcc, 30.0, (width_video, height_video))
+
+    print("Processing video... Press 'q' to stop.")
+
+    #frame_count
+    frame_count = 0
+    while video.isOpened():
+        ret, frame = video.read()
+        if not ret:
+            break
+        frame_count += 1
+    # Change_the_size_of_the_current_frame
+    frame_resized = cv2.resize(frame, (width_video, height_video))
+    # Drawing_rectangle
+    if print_rectangle_video == "yes":
+            cv2.rectangle(frame_resized, (Horizontal_axis1_video, Vertical_axis1_video), 
+                          (Horizontal_axis2_video, vertical_axis2_video), rect_color_vid, Line_thickness_video)
+    #output_video
+    output_video.write(frame_resized)
+    cv2.imshow("My Video Processing", frame_resized)
+
+
+    # Release resources
+    video.release()
+    output_video.release()
+    cv2.destroyAllWindows()
+    print("Video processing completed successfully!")
+
+else:
+    print("Invalid input. Please run the program again and enter 'image' or 'video'.")
+
+
